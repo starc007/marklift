@@ -6,12 +6,14 @@
 
 import { createHash } from "node:crypto";
 import { getAdapter } from "./adapters/index.js";
+import { toCanonicalTwitterUrl } from "./adapters/twitter.js";
 import { htmlToMarkdown } from "./converter/index.js";
 import {
   buildStructuredResult,
   optimizeForAgent,
   chunkBySize,
 } from "./chunker/index.js";
+import { formatMarkdownWithFrontmatter } from "./formatter/index.js";
 import type {
   ConvertOptions,
   SourceType,
@@ -82,8 +84,10 @@ export async function urlToMarkdown(
 
   const contentHash = createHash("sha256").update(markdown, "utf8").digest("hex");
 
+  const displayUrl = source === "twitter" ? toCanonicalTwitterUrl(url) : url;
+
   const result: MarkdownResult = {
-    url,
+    url: displayUrl,
     title: extracted.title,
     markdown,
     sections,
@@ -96,8 +100,11 @@ export async function urlToMarkdown(
     ...(extracted.metadata !== undefined && { metadata: extracted.metadata }),
   };
 
+  const formattedMarkdown = formatMarkdownWithFrontmatter(source, result);
+  result.markdown = formattedMarkdown;
+
   if (chunkSize != null && chunkSize > 0) {
-    result.chunks = chunkBySize(markdown, chunkSize);
+    result.chunks = chunkBySize(formattedMarkdown, chunkSize);
   }
 
   return result;

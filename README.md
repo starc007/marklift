@@ -91,7 +91,7 @@ Converts a URL to clean Markdown. Returns a `Promise<MarkdownResult>`.
 - `url` — Original URL
 - `title` — Page title
 - `description` — Meta description (if present)
-- `markdown` — Full markdown string (normalized `\n`, deterministic)
+- `markdown` — Full markdown with **source-specific frontmatter** (see below) + body
 - `sections` — `{ heading, content }[]` by heading (stable order)
 - `links` — Deduplicated links, sorted (tracking params stripped)
 - `wordCount` — Approximate word count
@@ -102,6 +102,45 @@ Converts a URL to clean Markdown. Returns a `Promise<MarkdownResult>`.
 ### `urlToMarkdownStream(url, options?)`
 
 Async generator that yields `MarkdownChunk` (meta, sections, links) as they are produced. Useful for streaming into an LLM or pipeline.
+
+### Markdown format (per source)
+
+Each adapter outputs markdown with a **frontmatter block** (`---` … `---`) then the body.
+
+**Website (and reddit, medium):**
+```yaml
+---
+source: https://example.com/article
+canonical: https://example.com/article
+title: Example Article Title
+description: Short meta description
+author: John Doe
+published_at: 2025-01-12
+language: en
+content_hash: <sha256>
+word_count: 1243
+---
+
+# Title
+
+Body content…
+```
+
+**Twitter:**
+```yaml
+---
+platform: twitter
+source: https://twitter.com/username/status/1234567890
+tweet_id: 1234567890
+author:
+  name: Author Name
+published_at: 2025-01-10T18:22:00Z
+language: en
+content_hash: <sha256>
+---
+
+Body content…
+```
 
 ### Errors
 

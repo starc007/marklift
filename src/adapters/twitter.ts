@@ -2,6 +2,41 @@ import { fetchHtml } from "../fetcher/index.js";
 import { extractContent } from "../extractor/index.js";
 import type { Adapter, AdapterContentResult, AdapterOptions } from "./types.js";
 
+const TWITTER_HOSTS = [
+  "twitter.com",
+  "www.twitter.com",
+  "x.com",
+  "www.x.com",
+  "mobile.twitter.com",
+  "nitter.net",
+  "www.nitter.net",
+];
+
+function isTwitterUrl(url: string): boolean {
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    return TWITTER_HOSTS.includes(host);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Converts any Twitter/Nitter URL to canonical x.com URL for display (source, result.url).
+ */
+export function toCanonicalTwitterUrl(url: string): string {
+  if (!isTwitterUrl(url)) return url;
+  try {
+    const u = new URL(url);
+    u.protocol = "https:";
+    u.hostname = "x.com";
+    u.port = "";
+    return u.href;
+  } catch {
+    return url;
+  }
+}
+
 /**
  * Rewrites Twitter/X URLs to Nitter (nitter.net) for fetch + extract.
  * Supports: twitter.com, x.com, mobile.twitter.com.
@@ -10,15 +45,7 @@ function toNitterUrl(url: string): string {
   try {
     const u = new URL(url);
     const host = u.hostname.toLowerCase();
-    const isTwitter =
-      host === "twitter.com" ||
-      host === "www.twitter.com" ||
-      host === "x.com" ||
-      host === "www.x.com" ||
-      host === "mobile.twitter.com" ||
-      host === "nitter.net" ||
-      host === "www.nitter.net";
-    if (!isTwitter) return url;
+    if (!TWITTER_HOSTS.includes(host)) return url;
     if (host === "nitter.net" || host === "www.nitter.net") return u.href;
     u.protocol = "https:";
     u.hostname = "nitter.net";
