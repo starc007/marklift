@@ -60,15 +60,14 @@ function extractMetadata(document: Document, baseUrl: string): Metadata {
     document.documentElement?.getAttribute("lang")?.trim() ??
     undefined;
 
-  return {
-    title,
-    description,
-    author,
-    publishedAt,
-    image,
-    canonicalUrl,
-    language,
-  };
+  const metadata: Metadata = { title };
+  if (description !== undefined) metadata.description = description;
+  if (author !== undefined) metadata.author = author;
+  if (publishedAt !== undefined) metadata.publishedAt = publishedAt;
+  if (image !== undefined) metadata.image = image;
+  if (canonicalUrl !== undefined) metadata.canonicalUrl = canonicalUrl;
+  if (language !== undefined) metadata.language = language;
+  return metadata;
 }
 
 /**
@@ -106,7 +105,9 @@ export function extractContent(
         ?.getAttribute("content")
         ?.trim() ??
       undefined;
-    return { title, content, description, metadata };
+    const basicResult: ExtractedContent = { title, content, metadata };
+    if (description !== undefined) basicResult.description = description;
+    return basicResult;
   }
 
   const reader = new Readability(document);
@@ -117,11 +118,13 @@ export function extractContent(
       undefined
     );
   }
-  return {
-    title: article.title || metadata.title,
-    content: article.content,
-    description: article.excerpt ?? metadata.description ?? undefined,
-    lang: article.lang ?? metadata.language ?? undefined,
-    metadata,
-  };
+  const title: string =
+    (article.title && article.title.trim()) || metadata.title || "";
+  const content: string = article.content ?? "";
+  const articleResult: ExtractedContent = { title, content, metadata };
+  const desc = article.excerpt ?? metadata.description;
+  if (desc !== undefined) articleResult.description = desc;
+  const lang = article.lang ?? metadata.language;
+  if (lang !== undefined) articleResult.lang = lang;
+  return articleResult;
 }

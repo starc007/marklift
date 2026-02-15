@@ -34,7 +34,8 @@ function createTurndown(): TurndownService {
   });
 
   service.addRule("stripScripts", {
-    filter: ["script", "style", "noscript", "svg"],
+    filter: (node) =>
+      ["SCRIPT", "STYLE", "NOSCRIPT", "SVG"].includes(node.nodeName),
     replacement: () => "",
   });
 
