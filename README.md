@@ -209,6 +209,12 @@ Set `SKIP_E2E=1` to skip E2E tests (e.g. in CI without network).
 
 ---
 
+## Contributing
+
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, code style, and how to submit changes.
+
+---
+
 ## License
 
-MIT
+[MIT](LICENSE)
