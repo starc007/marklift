@@ -1,11 +1,11 @@
 /**
  * Marklift CLI — Convert a URL to clean Markdown.
  *
- * Usage: marklift <url> [--mode basic|article|docs] [--timeout ms] [--chunk-size n] [--json]
+ * Usage: marklift <url> [--mode basic|article|docs] [--timeout ms] [--chunk-size n] [--render-js] [--json]
  */
 
 import { urlToMarkdown } from "./index.js";
-import type { ConvertMode } from "./utils/types.js";
+import type { ConvertOptions } from "./utils/types.js";
 import { MarkliftError } from "./utils/errors.js";
 
 const HELP = `
@@ -18,15 +18,16 @@ Options:
   --mode <basic|article|docs>  Extraction mode (default: article)
   --timeout <ms>               Request timeout in ms (default: 15000)
   --chunk-size <n>             Emit result.chunks with ~n chars per chunk
+  --render-js                  Use headless browser (Playwright) for JS-rendered pages
   --json                       Output full result as JSON instead of markdown
   -h, --help                   Show this help
 `.trim();
 
-function parseArgs(argv: string[]): { url: string; json: boolean; options: { mode?: ConvertMode; timeout?: number; chunkSize?: number } } {
+function parseArgs(argv: string[]): { url: string; json: boolean; options: ConvertOptions } {
   const args = argv.slice(2);
   let url = "";
   let json = false;
-  const options: { mode?: ConvertMode; timeout?: number; chunkSize?: number } = {};
+  const options: ConvertOptions = {};
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -55,6 +56,10 @@ function parseArgs(argv: string[]): { url: string; json: boolean; options: { mod
       const next = args[++i];
       const n = Number(next);
       if (Number.isFinite(n) && n > 0) options.chunkSize = n;
+      continue;
+    }
+    if (arg === "--render-js") {
+      options.renderJs = true;
       continue;
     }
     if (!url && (arg.startsWith("http://") || arg.startsWith("https://"))) {

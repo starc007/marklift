@@ -3,12 +3,15 @@
 **URL → Clean Markdown** — Fetch a webpage, extract the main content, and convert it to LLM-friendly Markdown. Built for agents and pipelines.
 
 - Fetches HTTP(S) URLs with configurable timeout and headers
+- **Optional JS rendering** — Use [Playwright](https://playwright.dev/) for JS-heavy sites (Medium, Substack, SPAs) via `renderJs: true`
 - Extracts article content with [Mozilla Readability](https://github.com/mozilla/readability) (or raw body)
 - Converts to Markdown with [Turndown](https://github.com/mixmark-io/turndown) and custom rules
 - Optimizes for agents: normalizes spacing, dedupes links, strips tracking params, optional chunking
 - Typed API and CLI
 
 **Requirements:** Node.js 18+
+
+**Optional:** For `renderJs` (headless browser), install Playwright: `npm install playwright`
 
 ---
 
@@ -52,6 +55,7 @@ marklift https://example.com --json
 # Options
 marklift https://example.com --mode article --timeout 15000
 marklift https://example.com --chunk-size 2000
+marklift https://medium.com/some-post --render-js   # JS-rendered page
 ```
 
 **CLI options:**
@@ -61,6 +65,7 @@ marklift https://example.com --chunk-size 2000
 | `--mode <basic\|article\|docs>` | Extraction mode (default: `article`) |
 | `--timeout <ms>` | Request timeout in milliseconds (default: 15000) |
 | `--chunk-size <n>` | Split markdown into chunks of ~n characters |
+| `--render-js` | Use headless browser (Playwright) for JS-rendered pages |
 | `--json` | Output full result as JSON instead of markdown |
 
 ---
@@ -78,6 +83,7 @@ Converts a URL to clean Markdown. Returns a `Promise<MarkdownResult>`.
 | `mode` | `"basic" \| "article" \| "docs"` | `basic` = raw body, `article` = Readability, `docs` = article + structure (default: `article`) |
 | `timeout` | `number` | Request timeout in ms (default: 15000) |
 | `headers` | `Record<string, string>` | Custom HTTP headers (e.g. `User-Agent`) |
+| `renderJs` | `boolean` | Use Playwright headless browser for JS-rendered pages (requires `npm install playwright`) |
 | `chunkSize` | `number` | If set, `result.chunks` will contain token-safe chunks |
 
 **Result (`MarkdownResult`):**

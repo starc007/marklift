@@ -2,7 +2,7 @@ import { FetchError, InvalidUrlError } from "../utils/errors.js";
 
 const DEFAULT_TIMEOUT_MS = 15_000;
 const DEFAULT_USER_AGENT =
-  "Marklift/1.0 (+https://github.com/yourusername/marklift)";
+  "Marklift/1.0 (+https://github.com/starc007/marklift)";
 
 /**
  * Fetches HTML from a URL with configurable timeout and headers.
@@ -28,8 +28,7 @@ export async function fetchHtml(
   const timeout = options.timeout ?? DEFAULT_TIMEOUT_MS;
   const headers: Record<string, string> = {
     "User-Agent": DEFAULT_USER_AGENT,
-    Accept:
-      "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     "Accept-Language": "en-US,en;q=0.9",
     ...options.headers,
   };
@@ -56,10 +55,8 @@ export async function fetchHtml(
   } catch (err) {
     clearTimeout(timeoutId);
     if (err instanceof FetchError || err instanceof InvalidUrlError) throw err;
-    const message =
-      err instanceof Error ? err.message : "Unknown fetch error";
-    const status =
-      err instanceof Response ? err.status : undefined;
+    const message = err instanceof Error ? err.message : "Unknown fetch error";
+    const status = err instanceof Response ? err.status : undefined;
     throw new FetchError(message, url, status, err);
   }
 }

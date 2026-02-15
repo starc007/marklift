@@ -53,7 +53,15 @@ export async function urlToMarkdown(
   const fetchOpts: { timeout?: number; headers?: Record<string, string> } = {};
   if (timeout !== undefined) fetchOpts.timeout = timeout;
   if (headers !== undefined) fetchOpts.headers = headers;
-  const html = await fetchHtml(url, fetchOpts);
+
+  let html: string;
+  if (options.renderJs) {
+    const { fetchWithPlaywright } = await import("./fetcher/playwright.js");
+    html = await fetchWithPlaywright(url, fetchOpts);
+  } else {
+    html = await fetchHtml(url, fetchOpts);
+  }
+
   const extracted = extractContent(html, url, mode);
   let markdown = htmlToMarkdown(extracted.content);
   markdown = optimizeForAgent(markdown);
