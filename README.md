@@ -80,7 +80,7 @@ Converts a URL to clean Markdown. Returns a `Promise<MarkdownResult>`.
 
 | Option | Type | Description |
 |--------|------|-------------|
-| `source` | `"website" \| "twitter" \| "reddit" \| "medium"` | Source adapter (default: `website`) |
+| `source` | `"website" \| "twitter" \| "reddit" \| "medium"` | Source adapter (default: `website`). For Twitter: pass a Twitter/X URL; we convert to Nitter internally and fetch. `result.url` stays the URL you passed. |
 | `timeout` | `number` | Request timeout in ms (default: 15000) |
 | `headers` | `Record<string, string>` | Custom HTTP headers (e.g. `User-Agent`) |
 | `renderJs` | `boolean` | Use Playwright headless browser (website only; medium uses it by default) |

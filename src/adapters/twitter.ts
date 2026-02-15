@@ -1,51 +1,56 @@
-import { FetchError } from "../utils/errors.js";
+import { fetchHtml } from "../fetcher/index.js";
+import { extractContent } from "../extractor/index.js";
 import type { Adapter, AdapterContentResult, AdapterOptions } from "./types.js";
 
-const OEMBED_URL = "https://publish.twitter.com/oembed";
+/**
+ * Rewrites Twitter/X URLs to Nitter (nitter.net) for fetch + extract.
+ * Supports: twitter.com, x.com, mobile.twitter.com.
+ */
+function toNitterUrl(url: string): string {
+  try {
+    const u = new URL(url);
+    const host = u.hostname.toLowerCase();
+    const isTwitter =
+      host === "twitter.com" ||
+      host === "www.twitter.com" ||
+      host === "x.com" ||
+      host === "www.x.com" ||
+      host === "mobile.twitter.com" ||
+      host === "nitter.net" ||
+      host === "www.nitter.net";
+    if (!isTwitter) return url;
+    if (host === "nitter.net" || host === "www.nitter.net") return u.href;
+    u.protocol = "https:";
+    u.hostname = "nitter.net";
+    u.port = "";
+    return u.href;
+  } catch {
+    return url;
+  }
+}
 
 /**
- * Twitter/X adapter: fetches embed HTML via oEmbed API, then returns it for conversion.
+ * Twitter/X adapter: user passes a Twitter/X URL only. We convert it to Nitter (nitter.net)
+ * internally, fetch the page from Nitter, extract with Readability, and return the result.
+ * result.url in MarkdownResult remains the original URL the user passed.
  */
 export const twitterAdapter: Adapter = async (
   url: string,
   options: AdapterOptions = {}
 ): Promise<AdapterContentResult> => {
-  const timeout = options.timeout ?? 15_000;
-  const oembedUrl = `${OEMBED_URL}?url=${encodeURIComponent(url)}`;
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeout);
+  const fetchUrl = toNitterUrl(url);
+  const fetchOpts: { timeout?: number; headers?: Record<string, string> } = {};
+  if (options.timeout !== undefined) fetchOpts.timeout = options.timeout;
+  if (options.headers !== undefined) fetchOpts.headers = options.headers;
 
-  try {
-    const res = await fetch(oembedUrl, {
-      signal: controller.signal,
-      headers: options.headers ?? {},
-    });
-    clearTimeout(timeoutId);
-    if (!res.ok) {
-      throw new FetchError(
-        `Twitter oEmbed failed: ${res.status} ${res.statusText}`,
-        url,
-        res.status
-      );
-    }
-    const data = (await res.json()) as {
-      html?: string;
-      title?: string;
-      author_name?: string;
-      author_url?: string;
-    };
-    const html = data.html ?? "";
-    const title = data.title?.trim() ?? "Tweet";
-    const description = data.author_name ? `By @${data.author_name}` : undefined;
-    return {
-      html: html || "<p>No content</p>",
-      title,
-      ...(description !== undefined && { description }),
-    };
-  } catch (err) {
-    clearTimeout(timeoutId);
-    if (err instanceof FetchError) throw err;
-    const message = err instanceof Error ? err.message : "Twitter oEmbed failed";
-    throw new FetchError(message, url, undefined, err);
-  }
+  const html = await fetchHtml(fetchUrl, fetchOpts);
+  const extracted = extractContent(html, fetchUrl, "article");
+  return {
+    html: extracted.content,
+    title: extracted.title,
+    ...(extracted.description !== undefined && {
+      description: extracted.description,
+    }),
+    ...(extracted.metadata !== undefined && { metadata: extracted.metadata }),
+  };
 };
