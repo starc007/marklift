@@ -19,7 +19,6 @@ export interface AdapterContentResult {
 export interface AdapterOptions {
   timeout?: number;
   headers?: Record<string, string>;
-  renderJs?: boolean;
 }
 
 /**

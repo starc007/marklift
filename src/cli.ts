@@ -1,7 +1,7 @@
 /**
  * Marklift CLI — Convert a URL to clean Markdown.
  *
- * Usage: marklift <url> [--source website|twitter|reddit] [--timeout ms] [--chunk-size n] [--render-js] [--json]
+ * Usage: marklift <url> [--source website|twitter|reddit] [--timeout ms] [--chunk-size n] [--json]
  */
 
 import { urlToMarkdown } from "./index.js";
@@ -18,7 +18,6 @@ Options:
   --source <website|twitter|reddit>  Source adapter (default: inferred from URL)
   --timeout <ms>               Request timeout in ms (default: 15000)
   --chunk-size <n>             Emit result.chunks with ~n chars per chunk
-  --render-js                  Use headless browser (Playwright) for JS-rendered pages
   --json                       Output full result as JSON instead of markdown
   -h, --help                   Show this help
 `.trim();
@@ -56,10 +55,6 @@ function parseArgs(argv: string[]): { url: string; json: boolean; options: Conve
       const next = args[++i];
       const n = Number(next);
       if (Number.isFinite(n) && n > 0) options.chunkSize = n;
-      continue;
-    }
-    if (arg === "--render-js") {
-      options.renderJs = true;
       continue;
     }
     if (!url && (arg.startsWith("http://") || arg.startsWith("https://"))) {

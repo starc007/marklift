@@ -6,8 +6,7 @@
 
 </div>
 
---- Fetches HTTP(S) URLs with configurable timeout and headers
-- **Optional JS rendering** — Use [Playwright](https://playwright.dev/) for JS-heavy sites (Substack, SPAs) via `renderJs: true`
+- Fetches HTTP(S) URLs with configurable timeout and headers
 - **Source types:** website, twitter (Nitter), reddit — **inferred from URL** when not specified. *Medium adapter is removed for now.*
 - Extracts article content with [Mozilla Readability](https://github.com/mozilla/readability) (or raw body)
 - Converts to Markdown with [Turndown](https://github.com/mixmark-io/turndown) and custom rules
@@ -15,8 +14,6 @@
 - Typed API and CLI
 
 **Requirements:** Node.js 18+
-
-**Optional:** For `renderJs` (headless browser), install Playwright: `npm install playwright`
 
 ---
 
@@ -73,7 +70,6 @@ marklift https://example.com --source website   # override inferred source
 | `--source <website\|twitter\|reddit>` | Source adapter (default: inferred from URL). Override when needed. |
 | `--timeout <ms>` | Request timeout in milliseconds (default: 15000) |
 | `--chunk-size <n>` | Split markdown into chunks of ~n characters |
-| `--render-js` | Use headless browser (Playwright) for JS-rendered pages |
 | `--json` | Output full result as JSON instead of markdown |
 
 ---
@@ -91,7 +87,6 @@ Converts a URL to clean Markdown. Returns a `Promise<MarkdownResult>`.
 | `source` | `"website" \| "twitter" \| "reddit"` | Source adapter. **Default: inferred from URL** (twitter.com/x.com/nitter → twitter, reddit.com → reddit, else website). Override to force a specific adapter. |
 | `timeout` | `number` | Request timeout in ms (default: 15000) |
 | `headers` | `Record<string, string>` | Custom HTTP headers (e.g. `User-Agent`) |
-| `renderJs` | `boolean` | Use Playwright headless browser for JS-rendered pages |
 | `chunkSize` | `number` | If set, `result.chunks` will contain token-safe chunks |
 
 **Result (`MarkdownResult`):**

@@ -54,13 +54,12 @@ export async function urlToMarkdown(
   url: string,
   options: ConvertOptions = {}
 ): Promise<MarkdownResult> {
-  const { timeout, headers, chunkSize, renderJs } = options;
+  const { timeout, headers, chunkSize } = options;
   const source = options.source ?? inferSourceFromUrl(url);
 
-  const adapterOpts: { timeout?: number; headers?: Record<string, string>; renderJs?: boolean } = {};
+  const adapterOpts: { timeout?: number; headers?: Record<string, string> } = {};
   if (timeout !== undefined) adapterOpts.timeout = timeout;
   if (headers !== undefined) adapterOpts.headers = headers;
-  if (renderJs !== undefined) adapterOpts.renderJs = renderJs;
 
   const adapter = getAdapter(source);
   const extracted = await adapter(url, adapterOpts);
