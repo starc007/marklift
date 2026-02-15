@@ -1,20 +1,21 @@
 /**
- * Conversion mode: basic (full page), article (Readability), or docs (structured docs).
+ * Source type: which adapter to use for fetch + extract.
+ * Default is "website" if not specified.
  */
-export type ConvertMode = "basic" | "article" | "docs";
+export type SourceType = "website" | "twitter" | "reddit" | "medium";
 
 /**
  * Options for urlToMarkdown conversion.
  */
 export interface ConvertOptions {
-  /** Use headless browser (Playwright) when true. Not implemented in basic build. */
+  /** Source adapter: website (default), twitter, reddit, medium. */
+  source?: SourceType;
+  /** Use headless browser (Playwright) when true. Some adapters (e.g. medium) enable this by default. */
   renderJs?: boolean;
   /** Request timeout in milliseconds. */
   timeout?: number;
   /** Custom HTTP headers (e.g. User-Agent). */
   headers?: Record<string, string>;
-  /** Extraction mode: basic (raw body), article (Readability), docs (article + structure). */
-  mode?: ConvertMode;
   /** Optional chunk size in characters for token-safe chunking; no chunking if omitted. */
   chunkSize?: number;
 }

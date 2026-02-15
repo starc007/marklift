@@ -5,8 +5,7 @@
  */
 
 import { createHash } from "node:crypto";
-import { fetchHtml } from "./fetcher/index.js";
-import { extractContent } from "./extractor/index.js";
+import { getAdapter } from "./adapters/index.js";
 import { htmlToMarkdown } from "./converter/index.js";
 import {
   buildStructuredResult,
@@ -15,7 +14,7 @@ import {
 } from "./chunker/index.js";
 import type {
   ConvertOptions,
-  ConvertMode,
+  SourceType,
   MarkdownResult,
   Section,
   MarkdownChunk,
@@ -25,7 +24,7 @@ import type {
 
 export type {
   ConvertOptions,
-  ConvertMode,
+  SourceType,
   MarkdownResult,
   Section,
   MarkdownChunk,
@@ -38,16 +37,16 @@ export { MarkliftError, FetchError, ParseError, InvalidUrlError } from "./utils/
  * Converts a URL to clean, structured Markdown optimized for LLM/agent consumption.
  *
  * @param url - Absolute HTTP(S) URL to fetch
- * @param options - timeout, headers, mode (basic | article | docs), chunkSize
+ * @param options - source (website | twitter | reddit | medium), timeout, headers, chunkSize
  * @returns MarkdownResult with title, markdown, sections, links, wordCount
  *
  * @example
  * ```ts
  * const result = await urlToMarkdown("https://example.com/article", {
- *   mode: "article",
+ *   source: "website",
  *   timeout: 10_000,
  * });
- * console.log(result.title, result.wordCount);
+ * const mediumResult = await urlToMarkdown("https://medium.com/...", { source: "medium" });
  * ```
  */
 export async function urlToMarkdown(
@@ -55,26 +54,22 @@ export async function urlToMarkdown(
   options: ConvertOptions = {}
 ): Promise<MarkdownResult> {
   const {
+    source = "website",
     timeout,
     headers,
-    mode = "article",
     chunkSize,
+    renderJs,
   } = options;
 
-  const fetchOpts: { timeout?: number; headers?: Record<string, string> } = {};
-  if (timeout !== undefined) fetchOpts.timeout = timeout;
-  if (headers !== undefined) fetchOpts.headers = headers;
+  const adapterOpts: { timeout?: number; headers?: Record<string, string>; renderJs?: boolean } = {};
+  if (timeout !== undefined) adapterOpts.timeout = timeout;
+  if (headers !== undefined) adapterOpts.headers = headers;
+  if (renderJs !== undefined) adapterOpts.renderJs = renderJs;
 
-  let html: string;
-  if (options.renderJs) {
-    const { fetchWithPlaywright } = await import("./fetcher/playwright.js");
-    html = await fetchWithPlaywright(url, fetchOpts);
-  } else {
-    html = await fetchHtml(url, fetchOpts);
-  }
+  const adapter = getAdapter(source);
+  const extracted = await adapter(url, adapterOpts);
 
-  const extracted = extractContent(html, url, mode);
-  let markdown = htmlToMarkdown(extracted.content);
+  let markdown = htmlToMarkdown(extracted.html);
   markdown = optimizeForAgent(markdown);
   markdown = markdown.replace(/\r\n/g, "\n").replace(/\r/g, "\n").trim();
 

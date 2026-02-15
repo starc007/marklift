@@ -9,7 +9,7 @@ const skipE2E = process.env.SKIP_E2E === "1";
 describe.skipIf(skipE2E)("urlToMarkdown (E2E)", () => {
   it("fetches a URL and returns structured Markdown", async () => {
     const result = await urlToMarkdown(EXAMPLE_URL, {
-      mode: "article",
+      source: "website",
       timeout: 15_000,
     });
 
@@ -37,9 +37,8 @@ describe.skipIf(skipE2E)("urlToMarkdown (E2E)", () => {
     }
   });
 
-  it("respects mode=basic (raw body)", async () => {
+  it("uses website adapter by default", async () => {
     const result = await urlToMarkdown(EXAMPLE_URL, {
-      mode: "basic",
       timeout: 15_000,
     });
 

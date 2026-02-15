@@ -1,11 +1,11 @@
 /**
  * Marklift CLI — Convert a URL to clean Markdown.
  *
- * Usage: marklift <url> [--mode basic|article|docs] [--timeout ms] [--chunk-size n] [--render-js] [--json]
+ * Usage: marklift <url> [--source website|twitter|reddit|medium] [--timeout ms] [--chunk-size n] [--render-js] [--json]
  */
 
 import { urlToMarkdown } from "./index.js";
-import type { ConvertOptions } from "./utils/types.js";
+import type { ConvertOptions, SourceType } from "./utils/types.js";
 import { MarkliftError } from "./utils/errors.js";
 
 const HELP = `
@@ -15,7 +15,7 @@ marklift <url> [options]
   content, and prints Markdown to stdout.
 
 Options:
-  --mode <basic|article|docs>  Extraction mode (default: article)
+  --source <website|twitter|reddit|medium>  Source adapter (default: website)
   --timeout <ms>               Request timeout in ms (default: 15000)
   --chunk-size <n>             Emit result.chunks with ~n chars per chunk
   --render-js                  Use headless browser (Playwright) for JS-rendered pages
@@ -39,10 +39,15 @@ function parseArgs(argv: string[]): { url: string; json: boolean; options: Conve
       json = true;
       continue;
     }
-    if (arg === "--mode") {
+    if (arg === "--source") {
       const next = args[++i];
-      if (next === "basic" || next === "article" || next === "docs") {
-        options.mode = next;
+      if (
+        next === "website" ||
+        next === "twitter" ||
+        next === "reddit" ||
+        next === "medium"
+      ) {
+        options.source = next as SourceType;
       }
       continue;
     }

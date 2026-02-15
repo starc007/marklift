@@ -31,7 +31,7 @@ npm install marklift
 import { urlToMarkdown } from "marklift";
 
 const result = await urlToMarkdown("https://example.com/article", {
-  mode: "article",
+  source: "website",
   timeout: 10_000,
 });
 
@@ -53,16 +53,16 @@ marklift https://example.com
 marklift https://example.com --json
 
 # Options
-marklift https://example.com --mode article --timeout 15000
+marklift https://example.com --source website --timeout 15000
 marklift https://example.com --chunk-size 2000
-marklift https://medium.com/some-post --render-js   # JS-rendered page
+marklift https://medium.com/some-post --source medium   # Medium (uses Playwright by default)
 ```
 
 **CLI options:**
 
 | Option | Description |
 |--------|-------------|
-| `--mode <basic\|article\|docs>` | Extraction mode (default: `article`) |
+| `--source <website\|twitter\|reddit\|medium>` | Source adapter (default: `website`) |
 | `--timeout <ms>` | Request timeout in milliseconds (default: 15000) |
 | `--chunk-size <n>` | Split markdown into chunks of ~n characters |
 | `--render-js` | Use headless browser (Playwright) for JS-rendered pages |
@@ -80,10 +80,10 @@ Converts a URL to clean Markdown. Returns a `Promise<MarkdownResult>`.
 
 | Option | Type | Description |
 |--------|------|-------------|
-| `mode` | `"basic" \| "article" \| "docs"` | `basic` = raw body, `article` = Readability, `docs` = article + structure (default: `article`) |
+| `source` | `"website" \| "twitter" \| "reddit" \| "medium"` | Source adapter (default: `website`) |
 | `timeout` | `number` | Request timeout in ms (default: 15000) |
 | `headers` | `Record<string, string>` | Custom HTTP headers (e.g. `User-Agent`) |
-| `renderJs` | `boolean` | Use Playwright headless browser for JS-rendered pages (requires `npm install playwright`) |
+| `renderJs` | `boolean` | Use Playwright headless browser (website only; medium uses it by default) |
 | `chunkSize` | `number` | If set, `result.chunks` will contain token-safe chunks |
 
 **Result (`MarkdownResult`):**
@@ -118,7 +118,7 @@ import { urlToMarkdown, urlToMarkdownStream } from "marklift";
 
 // One-shot
 const result = await urlToMarkdown("https://blog.example.com/post", {
-  mode: "article",
+  source: "website",
   timeout: 10_000,
   chunkSize: 2000,
 });

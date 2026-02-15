@@ -1,7 +1,10 @@
 import { JSDOM } from "jsdom";
 import { Readability } from "@mozilla/readability";
 import { ParseError } from "../utils/errors.js";
-import type { ConvertMode, Metadata } from "../utils/types.js";
+import type { Metadata } from "../utils/types.js";
+
+/** Internal: extraction strategy (basic = raw body, article = Readability). */
+type ExtractMode = "basic" | "article";
 
 export interface ExtractedContent {
   title: string;
@@ -81,7 +84,7 @@ function extractMetadata(document: Document, baseUrl: string): Metadata {
 export function extractContent(
   html: string,
   url: string,
-  mode: ConvertMode = "article"
+  mode: ExtractMode = "article"
 ): ExtractedContent {
   const dom = new JSDOM(html, { url });
   const document = dom.window.document;
