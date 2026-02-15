@@ -5,7 +5,7 @@
  */
 
 import { createHash } from "node:crypto";
-import { getAdapter } from "./adapters/index.js";
+import { getAdapter, inferSourceFromUrl } from "./adapters/index.js";
 import { toCanonicalTwitterUrl } from "./adapters/twitter.js";
 import { htmlToMarkdown } from "./converter/index.js";
 import {
@@ -39,29 +39,23 @@ export { MarkliftError, FetchError, ParseError, InvalidUrlError } from "./utils/
  * Converts a URL to clean, structured Markdown optimized for LLM/agent consumption.
  *
  * @param url - Absolute HTTP(S) URL to fetch
- * @param options - source (website | twitter | reddit), timeout, headers, chunkSize. Medium not supported currently.
+ * @param options - source (website | twitter | reddit; inferred from URL when omitted), timeout, headers, chunkSize.
  * @returns MarkdownResult with title, markdown, sections, links, wordCount
  *
  * @example
  * ```ts
- * const result = await urlToMarkdown("https://example.com/article", {
- *   source: "website",
- *   timeout: 10_000,
- * });
- * const tweetResult = await urlToMarkdown("https://x.com/user/status/123", { source: "twitter" });
+ * // source inferred from URL when omitted
+ * const tweetResult = await urlToMarkdown("https://x.com/user/status/123");
+ * const redditResult = await urlToMarkdown("https://reddit.com/r/...");
+ * const result = await urlToMarkdown("https://example.com/article", { timeout: 10_000 });
  * ```
  */
 export async function urlToMarkdown(
   url: string,
   options: ConvertOptions = {}
 ): Promise<MarkdownResult> {
-  const {
-    source = "website",
-    timeout,
-    headers,
-    chunkSize,
-    renderJs,
-  } = options;
+  const { timeout, headers, chunkSize, renderJs } = options;
+  const source = options.source ?? inferSourceFromUrl(url);
 
   const adapterOpts: { timeout?: number; headers?: Record<string, string>; renderJs?: boolean } = {};
   if (timeout !== undefined) adapterOpts.timeout = timeout;

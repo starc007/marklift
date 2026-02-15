@@ -15,7 +15,7 @@ marklift <url> [options]
   content, and prints Markdown to stdout. Sources: website, twitter, reddit (medium not supported currently).
 
 Options:
-  --source <website|twitter|reddit>  Source adapter (default: website)
+  --source <website|twitter|reddit>  Source adapter (default: inferred from URL)
   --timeout <ms>               Request timeout in ms (default: 15000)
   --chunk-size <n>             Emit result.chunks with ~n chars per chunk
   --render-js                  Use headless browser (Playwright) for JS-rendered pages

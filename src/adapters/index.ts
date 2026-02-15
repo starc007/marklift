@@ -10,6 +10,38 @@ const adapters: Record<SourceType, Adapter> = {
   reddit: redditAdapter,
 };
 
+const TWITTER_HOSTS = new Set([
+  "twitter.com",
+  "www.twitter.com",
+  "x.com",
+  "www.x.com",
+  "mobile.twitter.com",
+  "nitter.net",
+  "www.nitter.net",
+]);
+
+const REDDIT_HOSTS = new Set([
+  "reddit.com",
+  "www.reddit.com",
+  "new.reddit.com",
+  "old.reddit.com",
+]);
+
+/**
+ * Infers source type from URL host (twitter/x/nitter → twitter, reddit → reddit, else website).
+ * Use when the caller does not pass an explicit source.
+ */
+export function inferSourceFromUrl(url: string): SourceType {
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    if (TWITTER_HOSTS.has(host)) return "twitter";
+    if (REDDIT_HOSTS.has(host)) return "reddit";
+  } catch {
+    /* invalid URL */
+  }
+  return "website";
+}
+
 /**
  * Returns the adapter for the given source type. Defaults to website.
  * Medium is not supported currently.

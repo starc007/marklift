@@ -8,7 +8,7 @@
 
 --- Fetches HTTP(S) URLs with configurable timeout and headers
 - **Optional JS rendering** — Use [Playwright](https://playwright.dev/) for JS-heavy sites (Substack, SPAs) via `renderJs: true`
-- **Source types:** website (default), twitter (Nitter), reddit. *Medium adapter is removed for now.*
+- **Source types:** website, twitter (Nitter), reddit — **inferred from URL** when not specified. *Medium adapter is removed for now.*
 - Extracts article content with [Mozilla Readability](https://github.com/mozilla/readability) (or raw body)
 - Converts to Markdown with [Turndown](https://github.com/mixmark-io/turndown) and custom rules
 - Optimizes for agents: normalizes spacing, dedupes links, strips tracking params, optional chunking
@@ -35,10 +35,11 @@ npm install marklift
 ```ts
 import { urlToMarkdown } from "marklift";
 
+// source is inferred from URL when omitted (twitter/x.com → twitter, reddit → reddit, else website)
 const result = await urlToMarkdown("https://example.com/article", {
-  source: "website",
   timeout: 10_000,
 });
+const tweet = await urlToMarkdown("https://x.com/user/status/123"); // uses twitter adapter
 
 console.log(result.title);
 console.log(result.markdown);
@@ -51,23 +52,25 @@ console.log(result.wordCount, result.sections.length, result.links.length);
 # Install globally to get the `marklift` command
 npm install -g marklift
 
-# Convert a URL to Markdown (prints to stdout)
+# Convert a URL to Markdown (prints to stdout). Source is inferred from URL.
 marklift https://example.com
+marklift https://x.com/user/status/123   # uses twitter adapter
+marklift https://reddit.com/r/...         # uses reddit adapter
 
 # Output full result as JSON
 marklift https://example.com --json
 
 # Options
-marklift https://example.com --source website --timeout 15000
+marklift https://example.com --timeout 15000
 marklift https://example.com --chunk-size 2000
-marklift https://x.com/user/status/123 --source twitter
+marklift https://example.com --source website   # override inferred source
 ```
 
 **CLI options:**
 
 | Option | Description |
 |--------|-------------|
-| `--source <website\|twitter\|reddit>` | Source adapter (default: `website`). Medium not supported currently. |
+| `--source <website\|twitter\|reddit>` | Source adapter (default: inferred from URL). Override when needed. |
 | `--timeout <ms>` | Request timeout in milliseconds (default: 15000) |
 | `--chunk-size <n>` | Split markdown into chunks of ~n characters |
 | `--render-js` | Use headless browser (Playwright) for JS-rendered pages |
@@ -85,7 +88,7 @@ Converts a URL to clean Markdown. Returns a `Promise<MarkdownResult>`.
 
 | Option | Type | Description |
 |--------|------|-------------|
-| `source` | `"website" \| "twitter" \| "reddit"` | Source adapter (default: `website`). For Twitter: pass a Twitter/X URL; we convert to Nitter internally. Medium not supported currently. |
+| `source` | `"website" \| "twitter" \| "reddit"` | Source adapter. **Default: inferred from URL** (twitter.com/x.com/nitter → twitter, reddit.com → reddit, else website). Override to force a specific adapter. |
 | `timeout` | `number` | Request timeout in ms (default: 15000) |
 | `headers` | `Record<string, string>` | Custom HTTP headers (e.g. `User-Agent`) |
 | `renderJs` | `boolean` | Use Playwright headless browser for JS-rendered pages |
@@ -161,9 +164,8 @@ Body content…
 ```ts
 import { urlToMarkdown, urlToMarkdownStream } from "marklift";
 
-// One-shot
+// One-shot (source inferred from URL)
 const result = await urlToMarkdown("https://blog.example.com/post", {
-  source: "website",
   timeout: 10_000,
   chunkSize: 2000,
 });
