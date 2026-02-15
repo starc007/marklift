@@ -88,6 +88,7 @@ export const twitterAdapter: Adapter = async (
   return {
     html: extracted.content,
     title: extracted.title,
+    ...(extracted.markdown !== undefined && { markdown: extracted.markdown }),
     ...(extracted.description !== undefined && {
       description: extracted.description,
     }),

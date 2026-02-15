@@ -71,8 +71,12 @@ export async function urlToMarkdown(
   const adapter = getAdapter(source);
   const extracted = await adapter(url, adapterOpts);
 
-  let markdown = htmlToMarkdown(extracted.html);
-  markdown = optimizeForAgent(markdown);
+  const isPrebuiltMarkdown = extracted.markdown != null;
+  let markdown: string =
+    extracted.markdown ?? htmlToMarkdown(extracted.html);
+  if (!isPrebuiltMarkdown) {
+    markdown = optimizeForAgent(markdown);
+  }
   markdown = markdown.replace(/\r\n/g, "\n").replace(/\r/g, "\n").trim();
 
   const { sections, links, wordCount } = buildStructuredResult(

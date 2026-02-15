@@ -12,6 +12,8 @@ export interface ExtractedContent {
   description?: string;
   lang?: string;
   metadata?: Metadata;
+  /** When set, adapter/pipeline should use this as final markdown (skip htmlToMarkdown). */
+  markdown?: string;
 }
 
 /**

@@ -2,12 +2,15 @@ import type { Metadata } from "../utils/types.js";
 
 /**
  * Result returned by a source adapter (HTML + metadata for the pipeline).
+ * When markdown is set, pipeline uses it directly and skips htmlToMarkdown(html).
  */
 export interface AdapterContentResult {
   html: string;
   title: string;
   description?: string;
   metadata?: Metadata;
+  /** Pre-built markdown (e.g. Twitter); when set, pipeline uses this and skips htmlToMarkdown. */
+  markdown?: string;
 }
 
 /**

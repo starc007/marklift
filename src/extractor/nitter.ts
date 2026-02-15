@@ -1,13 +1,15 @@
 /**
  * Nitter status-page extractor.
  * Uses Nitter's HTML class names from zedeus/nitter (main-tweet, tweet-content, etc.)
- * to extract the main tweet and build semantic HTML for the pipeline.
+ * to extract the main tweet and build semantic HTML. For Twitter we output pre-built
+ * markdown with explicit newlines so section headers (--- ## Tweet ---) render correctly.
  */
 
 import { JSDOM } from "jsdom";
 import { ParseError } from "../utils/errors.js";
 import { extractMetadata } from "./index.js";
 import type { ExtractedContent } from "./index.js";
+import { htmlToMarkdown } from "../converter/index.js";
 
 function resolveUrl(href: string, baseUrl: string): string {
   try {
@@ -32,57 +34,55 @@ function resolveFragmentUrls(html: string, baseUrl: string): string {
   return doc.body.innerHTML;
 }
 
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+/** Result of rendering a single tweet element to semantic HTML. */
+interface TweetArticleResult {
+  html: string;
+  tweetStats: Record<string, string>;
+}
+
 /**
- * Extracts the main tweet from a Nitter status page using Nitter's DOM structure.
- * Builds semantic HTML (header, content, stats, quote) for htmlToMarkdown.
- *
- * Nitter structure (from zedeus/nitter src/views/status.nim, tweet.nim):
- * - .main-tweet#m wraps the main tweet
- * - .tweet-body > .tweet-header (.fullname, .username, .tweet-date), .tweet-content.media-body,
- *   .replying-to, .tweet-published, .tweet-stats, .quote
+ * Builds semantic HTML for one tweet container (element with .tweet-body inside).
+ * Used for main tweet, thread tweets, and replies.
  */
-export function extractNitterStatus(
-  html: string,
+function buildTweetArticle(
+  tweetContainer: Element,
   baseUrl: string
-): ExtractedContent {
-  const dom = new JSDOM(html, { url: baseUrl });
-  const document = dom.window.document;
-
-  const metadata = extractMetadata(document, baseUrl);
-
-  const mainTweet =
-    document.querySelector(".main-tweet") ?? document.querySelector("#m");
-  if (!mainTweet) {
-    throw new ParseError(
-      "Nitter page has no .main-tweet or #m (not a status page?)",
-      undefined
-    );
-  }
-
-  const fullnameEl = mainTweet.querySelector(".fullname");
-  const usernameEl = mainTweet.querySelector(".username");
-  const fullname =
-    fullnameEl?.textContent?.trim().replace(/^@/, "") ?? metadata.author ?? "";
+): TweetArticleResult {
+  const fullnameEl = tweetContainer.querySelector(".fullname");
+  const usernameEl = tweetContainer.querySelector(".username");
+  const fullname = fullnameEl?.textContent?.trim().replace(/^@/, "") ?? "";
   const username = usernameEl?.textContent?.trim() ?? "";
   const profilePath = usernameEl?.getAttribute("href")?.trim();
   const profileUrl = profilePath ? resolveUrl(profilePath, baseUrl) : "";
 
-  const dateEl = mainTweet.querySelector(".tweet-date a");
-  const publishedEl = mainTweet.querySelector(".tweet-published");
+  const dateEl = tweetContainer.querySelector(".tweet-date a");
+  const publishedEl = tweetContainer.querySelector(".tweet-published");
   const dateTitle = dateEl?.getAttribute("title")?.trim();
   const dateShort = dateEl?.textContent?.trim();
   const publishedText = publishedEl?.textContent?.trim();
   const dateDisplay = publishedText ?? dateTitle ?? dateShort ?? "";
 
-  const replyingToEl = mainTweet.querySelector(".replying-to");
+  const replyingToEl = tweetContainer.querySelector(".replying-to");
   const replyingTo = replyingToEl?.innerHTML?.trim();
 
-  const contentEl = mainTweet.querySelector(".tweet-content.media-body, .tweet-content");
+  const contentEl = tweetContainer.querySelector(
+    ".tweet-content.media-body, .tweet-content"
+  );
   const tweetContentHtml = contentEl?.innerHTML?.trim() ?? "";
   const tweetContentResolved = resolveFragmentUrls(tweetContentHtml, baseUrl);
 
-  const statsEl = mainTweet.querySelector(".tweet-stats");
-  const statEls = statsEl ? Array.from(statsEl.querySelectorAll(".tweet-stat")) : [];
+  const statsEl = tweetContainer.querySelector(".tweet-stats");
+  const statEls = statsEl
+    ? Array.from(statsEl.querySelectorAll(".tweet-stat"))
+    : [];
   const statLabels = ["replies", "retweets", "likes", "views"] as const;
   const stats: string[] = [];
   const tweetStats: Record<string, string> = {};
@@ -96,15 +96,20 @@ export function extractNitterStatus(
   });
   const statsLine = stats.length > 0 ? stats.join(" · ") : "";
 
-  const quoteEl = mainTweet.querySelector(".quote");
+  const quoteEl = tweetContainer.querySelector(".quote");
   let quoteHtml = "";
   if (quoteEl) {
-    const quoteLink = quoteEl.querySelector("a.quote-link, a.unavailable-quote");
+    const quoteLink = quoteEl.querySelector(
+      "a.quote-link, a.unavailable-quote"
+    );
     const quoteHref = quoteLink?.getAttribute("href");
     const quoteUrl = quoteHref ? resolveUrl(quoteHref, baseUrl) : "";
     const quoteTextEl = quoteEl.querySelector(".quote-text");
-    const quoteText = quoteTextEl?.innerHTML?.trim() ?? quoteEl.textContent?.trim() ?? "";
-    const quoteTextResolved = quoteText ? resolveFragmentUrls(quoteText, baseUrl) : "";
+    const quoteText =
+      quoteTextEl?.innerHTML?.trim() ?? quoteEl.textContent?.trim() ?? "";
+    const quoteTextResolved = quoteText
+      ? resolveFragmentUrls(quoteText, baseUrl)
+      : "";
     if (quoteTextResolved) {
       quoteHtml = quoteUrl
         ? `<blockquote cite="${quoteUrl}">${quoteTextResolved}<footer><a href="${quoteUrl}">Quoted tweet</a></footer></blockquote>`
@@ -112,18 +117,13 @@ export function extractNitterStatus(
     }
   }
 
-  const title =
-    metadata.title ||
-    (fullname && username
-      ? `Tweet by ${fullname} (${username})`
-      : document.querySelector("title")?.textContent?.trim() ?? "Tweet");
-
   const parts: string[] = [];
-
-  parts.push("<article class=\"tweet\">");
+  parts.push('<article class="tweet">');
   parts.push("<header>");
   if (fullname && profileUrl) {
-    parts.push(`<strong><a href="${profileUrl}">${escapeHtml(fullname)}</a></strong>`);
+    parts.push(
+      `<strong><a href="${profileUrl}">${escapeHtml(fullname)}</a></strong>`
+    );
   } else if (fullname) {
     parts.push(`<strong>${escapeHtml(fullname)}</strong>`);
   }
@@ -144,7 +144,9 @@ export function extractNitterStatus(
   parts.push(`<div class="tweet-content">${tweetContentResolved}</div>`);
 
   if (statsLine) {
-    parts.push(`<footer class="tweet-stats">${escapeHtml(statsLine)}</footer>`);
+    parts.push(
+      `<footer class="tweet-stats">${escapeHtml(statsLine)}</footer>`
+    );
   }
 
   if (quoteHtml) {
@@ -153,26 +155,119 @@ export function extractNitterStatus(
 
   parts.push("</article>");
 
-  const content = parts.join("\n");
+  return { html: parts.join("\n"), tweetStats };
+}
+
+/**
+ * Returns tweet containers in order: thread before, main, thread after, replies.
+ * Excludes .more-replies / .earlier-replies link nodes.
+ */
+function getTweetContainers(document: Document): {
+  main: Element | null;
+  threadBefore: Element[];
+  threadAfter: Element[];
+  replies: Element[];
+} {
+  const main =
+    document.querySelector(".main-tweet") ?? document.querySelector("#m");
+  const threadBefore = Array.from(
+    document.querySelectorAll(
+      ".main-thread .before-tweet .timeline-item:not(.more-replies):not(.earlier-replies)"
+    )
+  );
+  const threadAfter = Array.from(
+    document.querySelectorAll(
+      ".main-thread .after-tweet .timeline-item:not(.more-replies)"
+    )
+  );
+  const replies = Array.from(
+    document.querySelectorAll(".replies .timeline-item:not(.more-replies)")
+  );
+  return { main, threadBefore, threadAfter, replies };
+}
+
+/**
+ * Extracts the full status page: main tweet, thread (before/after), and replies.
+ * Uses Nitter's HTML class names (main-tweet, timeline-item, tweet-content, etc.).
+ */
+export function extractNitterStatus(
+  html: string,
+  baseUrl: string
+): ExtractedContent {
+  const dom = new JSDOM(html, { url: baseUrl });
+  const document = dom.window.document;
+
+  const metadata = extractMetadata(document, baseUrl);
+
+  const { main, threadBefore, threadAfter, replies } =
+    getTweetContainers(document);
+
+  if (!main) {
+    throw new ParseError(
+      "Nitter page has no .main-tweet or #m (not a status page?)",
+      undefined
+    );
+  }
+
+  const mainResult = buildTweetArticle(main, baseUrl);
+  const fullnameEl = main.querySelector(".fullname");
+  const usernameEl = main.querySelector(".username");
+  const fullname =
+    fullnameEl?.textContent?.trim().replace(/^@/, "") ?? metadata.author ?? "";
+  const username = usernameEl?.textContent?.trim() ?? "";
+
+  const title =
+    metadata.title ||
+    (fullname && username
+      ? `Tweet by ${fullname} (${username})`
+      : document.querySelector("title")?.textContent?.trim() ?? "Tweet");
+
+  const sectionBlock = (sectionTitle: string) =>
+    `---\n\n## ${sectionTitle}\n\n---\n\n`;
+
+  const mdParts: string[] = [];
+
+  mdParts.push(sectionBlock("Tweet"));
+  mdParts.push(htmlToMarkdown(mainResult.html));
+
+  if (threadBefore.length > 0 || threadAfter.length > 0) {
+    mdParts.push(sectionBlock("Threads"));
+    const threadParts: string[] = [];
+    for (const el of threadBefore) {
+      threadParts.push(htmlToMarkdown(buildTweetArticle(el, baseUrl).html));
+    }
+    if (threadBefore.length > 0 && threadAfter.length > 0) threadParts.push("");
+    for (const el of threadAfter) {
+      threadParts.push(htmlToMarkdown(buildTweetArticle(el, baseUrl).html));
+    }
+    mdParts.push(threadParts.join("\n\n"));
+  }
+
+  if (replies.length > 0) {
+    mdParts.push(sectionBlock("Replies"));
+    const replyParts: string[] = [];
+    for (const el of replies) {
+      replyParts.push(htmlToMarkdown(buildTweetArticle(el, baseUrl).html));
+    }
+    mdParts.push(replyParts.join("\n\n"));
+  }
+
+  const fullMarkdown = mdParts.join("\n\n");
 
   const author = (metadata.author ?? fullname).trim() || undefined;
   const result: ExtractedContent = {
     title,
-    content,
+    content: fullMarkdown,
+    markdown: fullMarkdown,
     metadata: {
       ...metadata,
       ...(author !== undefined ? { author } : {}),
-      ...(Object.keys(tweetStats).length > 0 ? { tweetStats } : {}),
+      ...(Object.keys(mainResult.tweetStats).length > 0
+        ? { tweetStats: mainResult.tweetStats }
+        : {}),
     },
   };
-  if (metadata.description !== undefined) result.description = metadata.description;
+  if (metadata.description !== undefined)
+    result.description = metadata.description;
   return result;
-}
-
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
 }

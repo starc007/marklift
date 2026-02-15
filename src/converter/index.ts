@@ -31,6 +31,8 @@ function createTurndown(): TurndownService {
     emDelimiter: "_",
     strongDelimiter: "**",
     linkStyle: "inlined",
+    /** Use --- for horizontal rules instead of default * * * */
+    hr: "---",
   });
 
   service.addRule("stripScripts", {
@@ -107,6 +109,17 @@ function normalizeWhitespace(s: string): string {
 }
 
 /**
+ * Ensures headings and horizontal rules are followed by a blank line so content
+ * renders on new lines (e.g. ## Tweet\n\ntweet content, not ## Tweet tweet content).
+ */
+function ensureBlockNewlines(md: string): string {
+  return md
+    .replace(/^(#{1,6} .+)$/gm, "$1\n\n")
+    .replace(/\n(---)\n/g, "\n\n---\n\n")
+    .replace(/\n{3,}/g, "\n\n");
+}
+
+/**
  * Converts HTML string to clean Markdown using Turndown with custom rules.
  *
  * @param html - HTML string (e.g. article content)
@@ -115,6 +128,7 @@ function normalizeWhitespace(s: string): string {
 export function htmlToMarkdown(html: string): string {
   const service = createTurndown();
   let md = service.turndown(html);
+  md = ensureBlockNewlines(md);
   md = normalizeWhitespace(md);
   return md.trim();
 }
