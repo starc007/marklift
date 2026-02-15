@@ -77,8 +77,8 @@ function formatTwitter(result: MarkdownResult): string {
 }
 
 /**
- * Returns full markdown with source-specific frontmatter (website, twitter, reddit, medium).
- * Reddit and medium use website format.
+ * Returns full markdown with source-specific frontmatter (website, twitter, reddit).
+ * Reddit uses website format. Medium is not supported currently.
  */
 export function formatMarkdownWithFrontmatter(
   source: SourceType,

@@ -3,7 +3,8 @@
 **URL → Clean Markdown** — Fetch a webpage, extract the main content, and convert it to LLM-friendly Markdown. Built for agents and pipelines.
 
 - Fetches HTTP(S) URLs with configurable timeout and headers
-- **Optional JS rendering** — Use [Playwright](https://playwright.dev/) for JS-heavy sites (Medium, Substack, SPAs) via `renderJs: true`
+- **Optional JS rendering** — Use [Playwright](https://playwright.dev/) for JS-heavy sites (Substack, SPAs) via `renderJs: true`
+- **Source types:** website (default), twitter (Nitter), reddit. *Medium adapter is removed for now.*
 - Extracts article content with [Mozilla Readability](https://github.com/mozilla/readability) (or raw body)
 - Converts to Markdown with [Turndown](https://github.com/mixmark-io/turndown) and custom rules
 - Optimizes for agents: normalizes spacing, dedupes links, strips tracking params, optional chunking
@@ -55,14 +56,14 @@ marklift https://example.com --json
 # Options
 marklift https://example.com --source website --timeout 15000
 marklift https://example.com --chunk-size 2000
-marklift https://medium.com/some-post --source medium   # Medium (uses Playwright by default)
+marklift https://x.com/user/status/123 --source twitter
 ```
 
 **CLI options:**
 
 | Option | Description |
 |--------|-------------|
-| `--source <website\|twitter\|reddit\|medium>` | Source adapter (default: `website`) |
+| `--source <website\|twitter\|reddit>` | Source adapter (default: `website`). Medium not supported currently. |
 | `--timeout <ms>` | Request timeout in milliseconds (default: 15000) |
 | `--chunk-size <n>` | Split markdown into chunks of ~n characters |
 | `--render-js` | Use headless browser (Playwright) for JS-rendered pages |
@@ -80,10 +81,10 @@ Converts a URL to clean Markdown. Returns a `Promise<MarkdownResult>`.
 
 | Option | Type | Description |
 |--------|------|-------------|
-| `source` | `"website" \| "twitter" \| "reddit" \| "medium"` | Source adapter (default: `website`). For Twitter: pass a Twitter/X URL; we convert to Nitter internally and fetch. `result.url` stays the URL you passed. |
+| `source` | `"website" \| "twitter" \| "reddit"` | Source adapter (default: `website`). For Twitter: pass a Twitter/X URL; we convert to Nitter internally. Medium not supported currently. |
 | `timeout` | `number` | Request timeout in ms (default: 15000) |
 | `headers` | `Record<string, string>` | Custom HTTP headers (e.g. `User-Agent`) |
-| `renderJs` | `boolean` | Use Playwright headless browser (website only; medium uses it by default) |
+| `renderJs` | `boolean` | Use Playwright headless browser for JS-rendered pages |
 | `chunkSize` | `number` | If set, `result.chunks` will contain token-safe chunks |
 
 **Result (`MarkdownResult`):**
@@ -107,7 +108,8 @@ Async generator that yields `MarkdownChunk` (meta, sections, links) as they are 
 
 Each adapter outputs markdown with a **frontmatter block** (`---` … `---`) then the body.
 
-**Website (and reddit, medium):**
+**Website (and reddit).** Format type: website. *Medium not supported currently.*
+
 ```yaml
 ---
 source: https://example.com/article

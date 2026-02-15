@@ -1,7 +1,7 @@
 /**
  * Marklift CLI — Convert a URL to clean Markdown.
  *
- * Usage: marklift <url> [--source website|twitter|reddit|medium] [--timeout ms] [--chunk-size n] [--render-js] [--json]
+ * Usage: marklift <url> [--source website|twitter|reddit] [--timeout ms] [--chunk-size n] [--render-js] [--json]
  */
 
 import { urlToMarkdown } from "./index.js";
@@ -12,10 +12,10 @@ const HELP = `
 marklift <url> [options]
 
   URL → Clean Markdown (agent-optimized). Fetches the page, extracts main
-  content, and prints Markdown to stdout.
+  content, and prints Markdown to stdout. Sources: website, twitter, reddit (medium not supported currently).
 
 Options:
-  --source <website|twitter|reddit|medium>  Source adapter (default: website)
+  --source <website|twitter|reddit>  Source adapter (default: website)
   --timeout <ms>               Request timeout in ms (default: 15000)
   --chunk-size <n>             Emit result.chunks with ~n chars per chunk
   --render-js                  Use headless browser (Playwright) for JS-rendered pages
@@ -41,12 +41,7 @@ function parseArgs(argv: string[]): { url: string; json: boolean; options: Conve
     }
     if (arg === "--source") {
       const next = args[++i];
-      if (
-        next === "website" ||
-        next === "twitter" ||
-        next === "reddit" ||
-        next === "medium"
-      ) {
+      if (next === "website" || next === "twitter" || next === "reddit") {
         options.source = next as SourceType;
       }
       continue;

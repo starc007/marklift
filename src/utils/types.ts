@@ -1,16 +1,17 @@
 /**
  * Source type: which adapter to use for fetch + extract.
  * Default is "website" if not specified.
+ * Note: Medium adapter is removed for now; use website with renderJs for Medium URLs.
  */
-export type SourceType = "website" | "twitter" | "reddit" | "medium";
+export type SourceType = "website" | "twitter" | "reddit";
 
 /**
  * Options for urlToMarkdown conversion.
  */
 export interface ConvertOptions {
-  /** Source adapter: website (default), twitter, reddit, medium. */
+  /** Source adapter: website (default), twitter, reddit. Medium is not supported currently. */
   source?: SourceType;
-  /** Use headless browser (Playwright) when true. Some adapters (e.g. medium) enable this by default. */
+  /** Use headless browser (Playwright) when true for JS-rendered pages. */
   renderJs?: boolean;
   /** Request timeout in milliseconds. */
   timeout?: number;

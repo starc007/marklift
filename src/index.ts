@@ -39,7 +39,7 @@ export { MarkliftError, FetchError, ParseError, InvalidUrlError } from "./utils/
  * Converts a URL to clean, structured Markdown optimized for LLM/agent consumption.
  *
  * @param url - Absolute HTTP(S) URL to fetch
- * @param options - source (website | twitter | reddit | medium), timeout, headers, chunkSize
+ * @param options - source (website | twitter | reddit), timeout, headers, chunkSize. Medium not supported currently.
  * @returns MarkdownResult with title, markdown, sections, links, wordCount
  *
  * @example
@@ -48,7 +48,7 @@ export { MarkliftError, FetchError, ParseError, InvalidUrlError } from "./utils/
  *   source: "website",
  *   timeout: 10_000,
  * });
- * const mediumResult = await urlToMarkdown("https://medium.com/...", { source: "medium" });
+ * const tweetResult = await urlToMarkdown("https://x.com/user/status/123", { source: "twitter" });
  * ```
  */
 export async function urlToMarkdown(
