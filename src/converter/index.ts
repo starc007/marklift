@@ -20,6 +20,15 @@ function stripTrackingParams(href: string): string {
   }
 }
 
+/** Single Turndown instance (stateless after setup) to avoid per-call rule registration. */
+let turndownInstance: TurndownService | null = null;
+
+function getTurndownService(): TurndownService {
+  if (turndownInstance) return turndownInstance;
+  turndownInstance = createTurndown();
+  return turndownInstance;
+}
+
 /**
  * Creates a Turndown instance with custom rules for headings, code, tables, links.
  */
@@ -126,7 +135,7 @@ function ensureBlockNewlines(md: string): string {
  * @returns Clean Markdown string
  */
 export function htmlToMarkdown(html: string): string {
-  const service = createTurndown();
+  const service = getTurndownService();
   let md = service.turndown(html);
   md = ensureBlockNewlines(md);
   md = normalizeWhitespace(md);

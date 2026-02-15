@@ -77,13 +77,27 @@ function formatTwitter(result: MarkdownResult): string {
 }
 
 /**
+ * Builds reddit-format: same frontmatter as website, with a "Comments" heading before the body.
+ */
+function formatReddit(result: MarkdownResult): string {
+  const withFrontmatter = formatWebsite(result);
+  const sep = "\n---\n\n";
+  const idx = withFrontmatter.indexOf(sep);
+  if (idx === -1) return withFrontmatter;
+  const beforeBody = withFrontmatter.slice(0, idx + sep.length);
+  const body = withFrontmatter.slice(idx + sep.length).trim();
+  return body ? `${beforeBody}## Comments\n\n${body}` : withFrontmatter;
+}
+
+/**
  * Returns full markdown with source-specific frontmatter (website, twitter, reddit).
- * Reddit uses website format. Medium is not supported currently.
+ * Reddit uses website frontmatter + "## Comments" heading before body. Medium is not supported currently.
  */
 export function formatMarkdownWithFrontmatter(
   source: SourceType,
   result: MarkdownResult
 ): string {
   if (source === "twitter") return formatTwitter(result);
+  if (source === "reddit") return formatReddit(result);
   return formatWebsite(result);
 }

@@ -94,6 +94,7 @@ export function optimizeForAgent(markdown: string): string {
 
 /**
  * Splits markdown into sections and returns them with deduplicated links and word count.
+ * Caller should pass already-optimized markdown (e.g. from pipeline which runs optimizeForAgent).
  */
 export function buildStructuredResult(
   markdown: string,
@@ -105,10 +106,9 @@ export function buildStructuredResult(
   links: string[];
   wordCount: number;
 } {
-  const optimized = optimizeForAgent(markdown);
-  const sections = splitSections(optimized);
-  const links = extractLinksFromMarkdown(optimized);
-  const count = wordCount(optimized);
+  const sections = splitSections(markdown);
+  const links = extractLinksFromMarkdown(markdown);
+  const count = wordCount(markdown);
   return { sections, links, wordCount: count };
 }
 
