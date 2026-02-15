@@ -12,7 +12,8 @@ function escapeValue(v: string): string {
 
 function line(key: string, value: string | undefined): string {
   if (value === undefined || value === "") return "";
-  return `${key}: ${escapeValue(value)}`;
+  const v = escapeValue(value.replace(/\s+/g, " ").trim());
+  return v ? `${key}: ${v}` : "";
 }
 
 /**
@@ -72,7 +73,7 @@ function formatTwitter(result: MarkdownResult): string {
     lines.push(`  name: ${escapeValue(m.author)}`);
   }
   const front = lines.join("\n");
-  return `---\n${front}\n---\n\n${result.markdown}`;
+  return `---\n${front}\n---\n${result.markdown}`;
 }
 
 /**

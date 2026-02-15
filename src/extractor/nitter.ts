@@ -222,37 +222,43 @@ export function extractNitterStatus(
       ? `Tweet by ${fullname} (${username})`
       : document.querySelector("title")?.textContent?.trim() ?? "Tweet");
 
+  /** Agent-optimized: minimal newlines to save tokens. */
   const sectionBlock = (sectionTitle: string) =>
-    `---\n\n## ${sectionTitle}\n\n---\n\n`;
+    `---\n## ${sectionTitle}\n---`;
 
+  const trimPart = (s: string) => s.trim();
   const mdParts: string[] = [];
 
   mdParts.push(sectionBlock("Tweet"));
-  mdParts.push(htmlToMarkdown(mainResult.html));
+  mdParts.push(trimPart(htmlToMarkdown(mainResult.html)));
 
   if (threadBefore.length > 0 || threadAfter.length > 0) {
     mdParts.push(sectionBlock("Threads"));
     const threadParts: string[] = [];
     for (const el of threadBefore) {
-      threadParts.push(htmlToMarkdown(buildTweetArticle(el, baseUrl).html));
+      threadParts.push(trimPart(htmlToMarkdown(buildTweetArticle(el, baseUrl).html)));
     }
     if (threadBefore.length > 0 && threadAfter.length > 0) threadParts.push("");
     for (const el of threadAfter) {
-      threadParts.push(htmlToMarkdown(buildTweetArticle(el, baseUrl).html));
+      threadParts.push(trimPart(htmlToMarkdown(buildTweetArticle(el, baseUrl).html)));
     }
-    mdParts.push(threadParts.join("\n\n"));
+    mdParts.push(threadParts.join("\n").replace(/\n{2,}/g, "\n").trim());
   }
 
   if (replies.length > 0) {
     mdParts.push(sectionBlock("Replies"));
     const replyParts: string[] = [];
     for (const el of replies) {
-      replyParts.push(htmlToMarkdown(buildTweetArticle(el, baseUrl).html));
+      replyParts.push(trimPart(htmlToMarkdown(buildTweetArticle(el, baseUrl).html)));
     }
-    mdParts.push(replyParts.join("\n\n"));
+    mdParts.push(replyParts.join("\n").replace(/\n{2,}/g, "\n").trim());
   }
 
-  const fullMarkdown = mdParts.join("\n\n");
+  const fullMarkdown = mdParts
+    .filter((p) => p.length > 0)
+    .join("\n")
+    .replace(/\n{2,}/g, "\n")
+    .trim();
 
   const author = (metadata.author ?? fullname).trim() || undefined;
   const result: ExtractedContent = {
