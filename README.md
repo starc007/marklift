@@ -144,6 +144,18 @@ src/
 
 ---
 
+## Testing
+
+```bash
+npm test          # unit + E2E (E2E needs network)
+npm run test:unit # unit only (no network)
+npm run test:e2e  # E2E with real URLs only
+```
+
+Set `SKIP_E2E=1` to skip E2E tests (e.g. in CI without network).
+
+---
+
 ## License
 
 MIT
