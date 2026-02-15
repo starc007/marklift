@@ -17,6 +17,7 @@
     "dist"
   ],
   "scripts": {
+    "prepublishOnly": "npm run build",
     "build": "tsup src/index.ts src/cli.ts --format esm,cjs --dts --clean --sourcemap && node -e \"const fs=require('fs'); const p='dist/cli.js'; if(fs.existsSync(p)) fs.writeFileSync(p,'#!/usr/bin/env node\\n'+fs.readFileSync(p,'utf8'))\"",
     "dev": "tsup src/index.ts src/cli.ts --format esm,cjs --dts --watch",
     "test": "vitest run",
@@ -36,7 +37,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/marklift"
+    "url": "https://github.com/starc007/marklift"
   },
   "engines": {
     "node": ">=18"
