@@ -1,8 +1,12 @@
+<div align="center">
+
 # Marklift
 
 **URL → Clean Markdown** — Fetch a webpage, extract the main content, and convert it to LLM-friendly Markdown. Built for agents and pipelines.
 
-- Fetches HTTP(S) URLs with configurable timeout and headers
+</div>
+
+--- Fetches HTTP(S) URLs with configurable timeout and headers
 - **Optional JS rendering** — Use [Playwright](https://playwright.dev/) for JS-heavy sites (Substack, SPAs) via `renderJs: true`
 - **Source types:** website (default), twitter (Nitter), reddit. *Medium adapter is removed for now.*
 - Extracts article content with [Mozilla Readability](https://github.com/mozilla/readability) (or raw body)
