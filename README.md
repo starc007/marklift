@@ -7,7 +7,7 @@
 </div>
 
 - Fetches HTTP(S) URLs with configurable timeout and headers
-- **Source types:** website, twitter (Nitter), reddit — **inferred from URL** when not specified. *Medium adapter is removed for now.*
+- **Source types:** website, twitter (Nitter), reddit — **inferred from URL** when not specified. _Medium adapter is removed for now._
 - Extracts article content with [Mozilla Readability](https://github.com/mozilla/readability) (or raw body)
 - Converts to Markdown with [Turndown](https://github.com/mixmark-io/turndown) and custom rules
 - Optimizes for agents: normalizes spacing, dedupes links, strips tracking params, optional chunking
@@ -16,6 +16,8 @@
 **Requirements:** Node.js 18+
 
 ---
+
+![The Web Is Not LLM-Ready — Raw HTML is noisy, heavy, tracking junk, inconsistent, and expensive in tokens.](image.png)
 
 ## Install
 
@@ -65,12 +67,12 @@ marklift https://example.com --source website   # override inferred source
 
 **CLI options:**
 
-| Option | Description |
-|--------|-------------|
+| Option                                | Description                                                        |
+| ------------------------------------- | ------------------------------------------------------------------ |
 | `--source <website\|twitter\|reddit>` | Source adapter (default: inferred from URL). Override when needed. |
-| `--timeout <ms>` | Request timeout in milliseconds (default: 15000) |
-| `--chunk-size <n>` | Split markdown into chunks of ~n characters |
-| `--json` | Output full result as JSON instead of markdown |
+| `--timeout <ms>`                      | Request timeout in milliseconds (default: 15000)                   |
+| `--chunk-size <n>`                    | Split markdown into chunks of ~n characters                        |
+| `--json`                              | Output full result as JSON instead of markdown                     |
 
 ---
 
@@ -82,12 +84,12 @@ Converts a URL to clean Markdown. Returns a `Promise<MarkdownResult>`.
 
 **Options:**
 
-| Option | Type | Description |
-|--------|------|-------------|
-| `source` | `"website" \| "twitter" \| "reddit"` | Source adapter. **Default: inferred from URL** (twitter.com/x.com/nitter → twitter, reddit.com → reddit, else website). Override to force a specific adapter. |
-| `timeout` | `number` | Request timeout in ms (default: 15000) |
-| `headers` | `Record<string, string>` | Custom HTTP headers (e.g. `User-Agent`) |
-| `chunkSize` | `number` | If set, `result.chunks` will contain token-safe chunks |
+| Option      | Type                                 | Description                                                                                                                                                   |
+| ----------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `source`    | `"website" \| "twitter" \| "reddit"` | Source adapter. **Default: inferred from URL** (twitter.com/x.com/nitter → twitter, reddit.com → reddit, else website). Override to force a specific adapter. |
+| `timeout`   | `number`                             | Request timeout in ms (default: 15000)                                                                                                                        |
+| `headers`   | `Record<string, string>`             | Custom HTTP headers (e.g. `User-Agent`)                                                                                                                       |
+| `chunkSize` | `number`                             | If set, `result.chunks` will contain token-safe chunks                                                                                                        |
 
 **Result (`MarkdownResult`):**
 
@@ -110,7 +112,7 @@ Async generator that yields `MarkdownChunk` (meta, sections, links) as they are 
 
 Each adapter outputs markdown with a **frontmatter block** (`---` … `---`) then the body.
 
-**Website (and reddit).** Format type: website. *Medium not supported currently.*
+**Website (and reddit).** Format type: website. _Medium not supported currently._
 
 ```yaml
 ---
@@ -124,13 +126,13 @@ language: en
 content_hash: <sha256>
 word_count: 1243
 ---
-
 # Title
 
 Body content…
 ```
 
 **Twitter:**
+
 ```yaml
 ---
 platform: twitter
@@ -142,7 +144,6 @@ published_at: 2025-01-10T18:22:00Z
 language: en
 content_hash: <sha256>
 ---
-
 Body content…
 ```
 
@@ -172,24 +173,11 @@ if (result.chunks) {
 }
 
 // Streaming
-for await (const chunk of urlToMarkdownStream("https://blog.example.com/post")) {
+for await (const chunk of urlToMarkdownStream(
+  "https://blog.example.com/post"
+)) {
   process.stdout.write(chunk.content);
 }
-```
-
----
-
-## Project structure
-
-```
-src/
-  fetcher/   # URL fetching
-  extractor/ # Readability / body extraction
-  converter/ # HTML → Markdown (Turndown)
-  chunker/   # Agent optimization & chunking
-  utils/     # Types, errors
-  index.ts   # Public API
-  cli.ts     # CLI entry
 ```
 
 ---
