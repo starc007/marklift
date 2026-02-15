@@ -153,6 +153,8 @@ Body content…
 - `FetchError` — Network error, timeout, or non-2xx response
 - `ParseError` — Readability or parsing failure
 
+**Production:** Website and reddit adapters use a browser-like `User-Agent` by default so requests from servers/datacenters get full HTML. The Twitter adapter keeps the Marklift `User-Agent` so Nitter works. Override via `headers` if needed.
+
 ---
 
 ## Example

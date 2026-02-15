@@ -4,6 +4,10 @@ const DEFAULT_TIMEOUT_MS = 15_000;
 const DEFAULT_USER_AGENT =
   "Marklift/1.0 (+https://github.com/starc007/marklift)";
 
+/** Browser-like UA for website/reddit so production gets full HTML; Twitter adapter keeps default (Nitter needs it). */
+export const BROWSER_USER_AGENT =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
+
 /**
  * Fetches HTML from a URL with configurable timeout and headers.
  *

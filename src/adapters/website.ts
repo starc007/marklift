@@ -1,10 +1,10 @@
-import { fetchHtml } from "../fetcher/index.js";
+import { fetchHtml, BROWSER_USER_AGENT } from "../fetcher/index.js";
 import { extractContent } from "../extractor/index.js";
 import type { Adapter, AdapterContentResult, AdapterOptions } from "./types.js";
 
 /**
  * Website adapter: fetches HTML and extracts with Readability.
- * Default adapter when source is not specified.
+ * Uses a browser-like User-Agent so production/datacenter gets full HTML; caller can override via headers.
  */
 export const websiteAdapter: Adapter = async (
   url: string,
@@ -13,7 +13,7 @@ export const websiteAdapter: Adapter = async (
   const { timeout, headers } = options;
   const fetchOpts: { timeout?: number; headers?: Record<string, string> } = {};
   if (timeout !== undefined) fetchOpts.timeout = timeout;
-  if (headers !== undefined) fetchOpts.headers = headers;
+  fetchOpts.headers = { "User-Agent": BROWSER_USER_AGENT, ...headers };
 
   const html = await fetchHtml(url, fetchOpts);
 
