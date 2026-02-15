@@ -27,8 +27,9 @@ function resolveUrl(href: string, baseUrl: string): string {
 
 /**
  * Extracts structured metadata from document (OG, canonical, author, published, etc.).
+ * Exported for Nitter/twitter-specific extractors.
  */
-function extractMetadata(document: Document, baseUrl: string): Metadata {
+export function extractMetadata(document: Document, baseUrl: string): Metadata {
   const getMeta = (selector: string): string | undefined =>
     document.querySelector(selector)?.getAttribute("content")?.trim() ??
     undefined;

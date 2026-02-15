@@ -60,6 +60,13 @@ function formatTwitter(result: MarkdownResult): string {
     line("language", m?.language),
     line("content_hash", result.contentHash),
   ].filter(Boolean);
+  const stats = m?.tweetStats;
+  if (stats) {
+    if (stats.replies !== undefined) lines.push(`replies: ${stats.replies}`);
+    if (stats.retweets !== undefined) lines.push(`retweets: ${stats.retweets}`);
+    if (stats.likes !== undefined) lines.push(`likes: ${stats.likes}`);
+    if (stats.views !== undefined) lines.push(`views: ${stats.views}`);
+  }
   if (m?.author) {
     lines.push("author:");
     lines.push(`  name: ${escapeValue(m.author)}`);

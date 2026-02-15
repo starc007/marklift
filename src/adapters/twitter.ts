@@ -1,5 +1,7 @@
 import { fetchHtml } from "../fetcher/index.js";
 import { extractContent } from "../extractor/index.js";
+import { extractNitterStatus } from "../extractor/nitter.js";
+import { ParseError } from "../utils/errors.js";
 import type { Adapter, AdapterContentResult, AdapterOptions } from "./types.js";
 
 const TWITTER_HOSTS = [
@@ -71,7 +73,18 @@ export const twitterAdapter: Adapter = async (
   if (options.headers !== undefined) fetchOpts.headers = options.headers;
 
   const html = await fetchHtml(fetchUrl, fetchOpts);
-  const extracted = extractContent(html, fetchUrl, "article");
+
+  let extracted;
+  try {
+    extracted = extractNitterStatus(html, fetchUrl);
+  } catch (err) {
+    if (err instanceof ParseError) {
+      extracted = extractContent(html, fetchUrl, "article");
+    } else {
+      throw err;
+    }
+  }
+
   return {
     html: extracted.content,
     title: extracted.title,

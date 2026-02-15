@@ -31,6 +31,14 @@ export interface Section {
 /**
  * Structured metadata extracted from the page (OG, canonical, author, etc.).
  */
+/** Tweet engagement stats (from Nitter/Twitter). */
+export interface TweetStats {
+  replies?: string;
+  retweets?: string;
+  likes?: string;
+  views?: string;
+}
+
 export interface Metadata {
   title: string;
   description?: string;
@@ -39,6 +47,8 @@ export interface Metadata {
   image?: string;
   canonicalUrl?: string;
   language?: string;
+  /** Tweet stats when source is twitter (replies, retweets, likes, views). */
+  tweetStats?: TweetStats;
 }
 
 /**
