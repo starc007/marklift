@@ -3,7 +3,43 @@ import {
   extractLinksFromMarkdown,
   wordCount,
 } from "../converter/index.js";
-import type { Section } from "../utils/types.js";
+import type { Section, MarkdownChunkItem } from "../utils/types.js";
+
+/**
+ * Splits markdown into "atoms" that must not be split (code blocks, tables, or other lines).
+ */
+function splitIntoAtoms(markdown: string): string[] {
+  const atoms: string[] = [];
+  const lines = markdown.split("\n");
+  let i = 0;
+  const codeBlockRegex = /^```(\s*\w*)\s*$/;
+
+  while (i < lines.length) {
+    const line = lines[i];
+    if (line.match(codeBlockRegex)) {
+      const start = i;
+      i++;
+      while (i < lines.length && !/^```\s*$/.test(lines[i])) i++;
+      if (i < lines.length) i++;
+      atoms.push(lines.slice(start, i).join("\n"));
+      continue;
+    }
+    if (line.trim().startsWith("|") && line.includes("|")) {
+      const start = i;
+      while (i < lines.length && lines[i].trim().startsWith("|") && lines[i].includes("|")) i++;
+      atoms.push(lines.slice(start, i).join("\n"));
+      continue;
+    }
+    const start = i;
+    while (i < lines.length) {
+      const l = lines[i];
+      if (l.match(codeBlockRegex) || (l.trim().startsWith("|") && l.includes("|"))) break;
+      i++;
+    }
+    if (start < i) atoms.push(lines.slice(start, i).join("\n"));
+  }
+  return atoms;
+}
 
 /**
  * Normalizes spacing: collapse multiple newlines and trim lines.
@@ -77,42 +113,54 @@ export function buildStructuredResult(
 }
 
 /**
- * Chunks markdown by approximate character size (token-safe); preserves section boundaries when possible.
+ * Chunks markdown by size without splitting inside code blocks or tables.
+ * Prefers section boundaries; returns index and total per chunk.
  *
- * @param markdown - Full markdown string
+ * @param markdown - Full markdown string (normalized line endings)
  * @param chunkSize - Max characters per chunk
- * @returns Array of chunk strings
+ * @returns Array of MarkdownChunkItem with content, index, total
  */
-export function chunkBySize(markdown: string, chunkSize: number): string[] {
-  if (chunkSize <= 0) return [markdown];
-  const sections = splitSections(markdown);
-  const chunks: string[] = [];
+export function chunkBySize(markdown: string, chunkSize: number): MarkdownChunkItem[] {
+  if (chunkSize <= 0) {
+    const normalized = markdown.replace(/\r\n/g, "\n").replace(/\r/g, "\n").trim();
+    return [{ content: normalized, index: 0, total: 1 }];
+  }
+  const atoms = splitIntoAtoms(markdown);
+  const result: MarkdownChunkItem[] = [];
   let current = "";
 
-  for (const { heading, content } of sections) {
-    const block = heading ? `## ${heading}\n\n${content}` : content;
-    if (current.length + block.length + 2 <= chunkSize) {
-      current = current ? `${current}\n\n${block}` : block;
+  for (const atom of atoms) {
+    const sep = current ? "\n\n" : "";
+    if (current.length + sep.length + atom.length <= chunkSize) {
+      current = current ? `${current}${sep}${atom}` : atom;
     } else {
-      if (current) chunks.push(current);
-      if (block.length <= chunkSize) {
-        current = block;
+      if (current) {
+        result.push({
+          content: current.trim(),
+          index: result.length,
+          total: 0,
+        });
+      }
+      if (atom.length <= chunkSize) {
+        current = atom;
       } else {
+        result.push({
+          content: atom.trim(),
+          index: result.length,
+          total: 0,
+        });
         current = "";
-        const lines = block.split("\n");
-        let acc = "";
-        for (const line of lines) {
-          if (acc.length + line.length + 1 > chunkSize && acc) {
-            chunks.push(acc.trim());
-            acc = line;
-          } else {
-            acc = acc ? `${acc}\n${line}` : line;
-          }
-        }
-        if (acc) current = acc;
       }
     }
   }
-  if (current) chunks.push(current.trim());
-  return chunks;
+  if (current) {
+    result.push({
+      content: current.trim(),
+      index: result.length,
+      total: 0,
+    });
+  }
+  const total = result.length;
+  result.forEach((c) => (c.total = total));
+  return result;
 }

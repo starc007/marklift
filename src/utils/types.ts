@@ -28,6 +28,28 @@ export interface Section {
 }
 
 /**
+ * Structured metadata extracted from the page (OG, canonical, author, etc.).
+ */
+export interface Metadata {
+  title: string;
+  description?: string;
+  author?: string;
+  publishedAt?: string;
+  image?: string;
+  canonicalUrl?: string;
+  language?: string;
+}
+
+/**
+ * A single chunk with index and total for deterministic ordering.
+ */
+export interface MarkdownChunkItem {
+  content: string;
+  index: number;
+  total: number;
+}
+
+/**
  * Result of converting a URL to Markdown.
  */
 export interface MarkdownResult {
@@ -39,14 +61,18 @@ export interface MarkdownResult {
   description?: string;
   /** Full markdown string. */
   markdown: string;
-  /** Sections parsed by heading. */
+  /** Sections parsed by heading (stable order). */
   sections: Section[];
-  /** Unique links found in the content (tracking params stripped). */
+  /** Unique links, sorted for deterministic output. */
   links: string[];
   /** Approximate word count. */
   wordCount: number;
-  /** Chunks when chunkSize option is set (token-safe). */
-  chunks?: string[];
+  /** SHA-256 hash of optimized markdown for stability checks. */
+  contentHash: string;
+  /** Structured metadata (OG, canonical, author, etc.). */
+  metadata?: Metadata;
+  /** Chunks when chunkSize option is set (safe boundaries, index+total). */
+  chunks?: MarkdownChunkItem[];
 }
 
 /**

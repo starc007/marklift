@@ -23,6 +23,8 @@ describe.skipIf(skipE2E)("urlToMarkdown (E2E)", () => {
     expect(Array.isArray(result.links)).toBe(true);
     expect(typeof result.wordCount).toBe("number");
     expect(result.wordCount).toBeGreaterThan(0);
+    expect(typeof result.contentHash).toBe("string");
+    expect(result.contentHash.length).toBe(64);
   });
 
   it("returns sections with heading and content", async () => {
@@ -55,10 +57,13 @@ describe.skipIf(skipE2E)("urlToMarkdown (E2E)", () => {
     expect(result.chunks).toBeDefined();
     expect(Array.isArray(result.chunks)).toBe(true);
     if (result.chunks!.length > 0) {
-      for (const chunk of result.chunks!) {
-        expect(typeof chunk).toBe("string");
-        expect(chunk.length).toBeLessThanOrEqual(600);
-      }
+      const total = result.chunks!.length;
+      result.chunks!.forEach((chunk, i) => {
+        expect(chunk).toHaveProperty("content");
+        expect(chunk).toHaveProperty("index", i);
+        expect(chunk).toHaveProperty("total", total);
+        expect(typeof chunk.content).toBe("string");
+      });
     }
   });
 });

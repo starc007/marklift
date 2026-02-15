@@ -4,6 +4,7 @@
  * Fetches a URL, extracts main content, and converts to LLM-friendly Markdown.
  */
 
+import { createHash } from "node:crypto";
 import { fetchHtml } from "./fetcher/index.js";
 import { extractContent } from "./extractor/index.js";
 import { htmlToMarkdown } from "./converter/index.js";
@@ -18,9 +19,19 @@ import type {
   MarkdownResult,
   Section,
   MarkdownChunk,
+  Metadata,
+  MarkdownChunkItem,
 } from "./utils/types.js";
 
-export type { ConvertOptions, ConvertMode, MarkdownResult, Section, MarkdownChunk };
+export type {
+  ConvertOptions,
+  ConvertMode,
+  MarkdownResult,
+  Section,
+  MarkdownChunk,
+  Metadata,
+  MarkdownChunkItem,
+};
 export { MarkliftError, FetchError, ParseError, InvalidUrlError } from "./utils/errors.js";
 
 /**
@@ -65,6 +76,7 @@ export async function urlToMarkdown(
   const extracted = extractContent(html, url, mode);
   let markdown = htmlToMarkdown(extracted.content);
   markdown = optimizeForAgent(markdown);
+  markdown = markdown.replace(/\r\n/g, "\n").replace(/\r/g, "\n").trim();
 
   const { sections, links, wordCount } = buildStructuredResult(
     markdown,
@@ -73,6 +85,8 @@ export async function urlToMarkdown(
     extracted.description
   );
 
+  const contentHash = createHash("sha256").update(markdown, "utf8").digest("hex");
+
   const result: MarkdownResult = {
     url,
     title: extracted.title,
@@ -80,9 +94,11 @@ export async function urlToMarkdown(
     sections,
     links,
     wordCount,
+    contentHash,
     ...(extracted.description !== undefined && {
       description: extracted.description,
     }),
+    ...(extracted.metadata !== undefined && { metadata: extracted.metadata }),
   };
 
   if (chunkSize != null && chunkSize > 0) {

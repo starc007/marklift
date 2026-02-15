@@ -46,8 +46,9 @@ function createTurndown(): TurndownService {
     },
     replacement: (_, node) => {
       const code = (node as Element).querySelector("code");
-      const lang = code?.className?.match(/language-(\w+)/)?.[1] ?? "";
-      const text = code?.textContent ?? (node as Element).textContent ?? "";
+      const lang = code?.className?.match(/language-(\S+)/)?.[1]?.trim() ?? "";
+      let text = code?.textContent ?? (node as Element).textContent ?? "";
+      text = normalizeCodeBlockContent(text);
       const fence = "```";
       return `\n${fence}${lang ? ` ${lang}` : ""}\n${text}\n${fence}\n`;
     },
@@ -69,7 +70,30 @@ function createTurndown(): TurndownService {
 }
 
 /**
- * Normalize whitespace: collapse multiple blanks and blank lines.
+ * Normalize code block content: trim empty lines at start/end, remove common leading indent.
+ */
+function normalizeCodeBlockContent(text: string): string {
+  let out = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  out = out.replace(/^\n+|\n+$/g, "");
+  const lines = out.split("\n");
+  if (lines.length === 0) return "";
+  const minIndent = lines
+    .filter((l) => l.trim().length > 0)
+    .reduce((min, l) => {
+      const m = l.match(/^(\s*)/);
+      const len = m ? m[1].length : 0;
+      return min === -1 ? len : Math.min(min, len);
+    }, -1);
+  if (minIndent > 0) {
+    out = lines
+      .map((l) => (l.length >= minIndent ? l.slice(minIndent) : l))
+      .join("\n");
+  }
+  return out;
+}
+
+/**
+ * Normalize whitespace: collapse multiple blanks and blank lines; force Unix line endings.
  */
 function normalizeWhitespace(s: string): string {
   return s
@@ -118,7 +142,7 @@ export function extractLinksFromMarkdown(md: string): string[] {
       urls.push(u);
     }
   }
-  return urls;
+  return [...urls].sort((a, b) => a.localeCompare(b, "en"));
 }
 
 /**

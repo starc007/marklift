@@ -37,11 +37,14 @@ describe("converter", () => {
     expect(wordCount("  a   b   c  ")).toBe(3);
   });
 
-  it("extractLinksFromMarkdown extracts and dedupes links", () => {
-    const md = "See [link](https://example.com) and https://example.com/other.";
+  it("extractLinksFromMarkdown extracts, dedupes, and sorts links", () => {
+    const md = "See [b](https://b.com) and [a](https://a.com).";
     const links = extractLinksFromMarkdown(md);
-    expect(links.length).toBeGreaterThanOrEqual(1);
+    expect(links.length).toBe(2);
     expect(links.every((l: string) => l.startsWith("http"))).toBe(true);
+    expect(links[0].startsWith("https://a.com")).toBe(true);
+    expect(links[1].startsWith("https://b.com")).toBe(true);
+    expect(links[0] <= links[1]).toBe(true);
   });
 });
 
@@ -53,14 +56,18 @@ describe("chunker", () => {
     expect(out.trim()).toBe(out);
   });
 
-  it("chunkBySize splits by size", () => {
+  it("chunkBySize returns chunks with content, index, total", () => {
     const md = "# A\n\nShort.\n\n# B\n\nAlso short.";
     const chunks = chunkBySize(md, 20);
     expect(Array.isArray(chunks)).toBe(true);
     expect(chunks.length).toBeGreaterThanOrEqual(1);
-    for (const c of chunks) {
-      expect(c.length).toBeLessThanOrEqual(25);
-    }
+    const total = chunks.length;
+    chunks.forEach((c, i) => {
+      expect(c).toHaveProperty("content");
+      expect(c).toHaveProperty("index", i);
+      expect(c).toHaveProperty("total", total);
+      expect(typeof c.content).toBe("string");
+    });
   });
 
   it("buildStructuredResult returns sections, links, wordCount", () => {

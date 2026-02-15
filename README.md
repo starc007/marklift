@@ -91,11 +91,13 @@ Converts a URL to clean Markdown. Returns a `Promise<MarkdownResult>`.
 - `url` — Original URL
 - `title` — Page title
 - `description` — Meta description (if present)
-- `markdown` — Full markdown string
-- `sections` — `{ heading, content }[]` by heading
-- `links` — Deduplicated links (tracking params stripped)
+- `markdown` — Full markdown string (normalized `\n`, deterministic)
+- `sections` — `{ heading, content }[]` by heading (stable order)
+- `links` — Deduplicated links, sorted (tracking params stripped)
 - `wordCount` — Approximate word count
-- `chunks?` — Present when `chunkSize` is set
+- `contentHash` — SHA-256 of optimized markdown (stability checks)
+- `metadata?` — Structured metadata (OG, canonical, author, publishedAt, image, language)
+- `chunks?` — When `chunkSize` is set: `{ content, index, total }[]` (no split inside code blocks or tables)
 
 ### `urlToMarkdownStream(url, options?)`
 
