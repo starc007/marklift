@@ -1,4 +1,4 @@
-import { fetchHtml, BROWSER_USER_AGENT } from "../fetcher/index.js";
+import { fetchHtml, BROWSER_HEADERS } from "../fetcher/index.js";
 import { extractContent } from "../extractor/index.js";
 import type { Adapter, AdapterContentResult, AdapterOptions } from "./types.js";
 
@@ -13,7 +13,7 @@ export const websiteAdapter: Adapter = async (
   const { timeout, headers } = options;
   const fetchOpts: { timeout?: number; headers?: Record<string, string> } = {};
   if (timeout !== undefined) fetchOpts.timeout = timeout;
-  fetchOpts.headers = { "User-Agent": BROWSER_USER_AGENT, ...headers };
+  fetchOpts.headers = { ...BROWSER_HEADERS, ...headers };
 
   const html = await fetchHtml(url, fetchOpts);
 

@@ -1,4 +1,4 @@
-import { fetchHtml, BROWSER_USER_AGENT } from "../fetcher/index.js";
+import { fetchHtml, BROWSER_HEADERS } from "../fetcher/index.js";
 import { extractContent } from "../extractor/index.js";
 import type { Adapter, AdapterContentResult, AdapterOptions } from "./types.js";
 
@@ -32,7 +32,7 @@ export const redditAdapter: Adapter = async (
   const fetchUrl = toOldRedditUrl(url);
   const fetchOpts: { timeout?: number; headers?: Record<string, string> } = {};
   if (options.timeout !== undefined) fetchOpts.timeout = options.timeout;
-  fetchOpts.headers = { "User-Agent": BROWSER_USER_AGENT, ...options.headers };
+  fetchOpts.headers = { ...BROWSER_HEADERS, ...options.headers };
   const html = await fetchHtml(fetchUrl, fetchOpts);
   const extracted = extractContent(html, fetchUrl, "article");
   return {
